@@ -1,0 +1,11 @@
+<div class="ui-g">
+    <div *ngFor="let node of children"class="ui-g-12 ui-md-6">
+        <metadata [node]="node"></metadata>
+    </div>
+
+    <div *ngIf="_context.debugging">
+        <pre>
+            {{JSON.stringify(this._context.data)}}
+        </pre>
+    </div>
+</div>

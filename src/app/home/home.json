@@ -1,0 +1,38 @@
+[
+    {
+        "type": "responsive",
+        "children": [
+            {
+                "id": "TestA",
+                "type": "input",
+                "label": "Hello World"
+            },
+            {
+                "id": "TestB",
+                "type": "input",
+                "label": "Hello World"
+            },
+            {
+                "id": "TestC",
+                "type": "input",
+                "label": "Hello World"
+            },
+            {
+                "id": "TestD",
+                "type": "input",
+                "label": "Hello World"
+            }
+        ]
+    },
+    {
+        "type": "grid",
+        "data": [
+            {
+                "name": "Test Data Row 1"
+            },
+            {
+                "name": "Test Data Row 2"
+            }
+        ]
+    }
+]

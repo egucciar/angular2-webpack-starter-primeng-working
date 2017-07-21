@@ -17,8 +17,16 @@ import * as _ from 'lodash';
 import { JitCompiler } from '@angular/compiler';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
-// import { DataTableModule } from "angular2-datatable";
-// import { AngularComponent } from '../angular.component';
+
+// primeng components
+import 'font-awesome/css/font-awesome.min.css';
+import 'primeng/resources/themes/omega/theme.css';
+import 'primeng/resources/primeng.min.css';
+import { DataTableModule } from 'primeng/components/datatable/datatable';
+
+// RX
+import { Subject } from 'rxjs/Subject';
+import { Observable } from 'rxjs/Observable';
 
 const componentCache = {};
 
@@ -90,30 +98,69 @@ function createComponent(tmpl:string, selector: string) {
     })
     class PJSONComponent {
       _node : any;
-      classes : string;
-      isShown : boolean;
-      templates : any[] = [];
+
+      inputValue = new Subject();
+      initialValue = null;
+      JSON = JSON;
 
       @Input()
       set node(node: any){
         this._node = node;
         this.nodeDependencies();
       }
-
       get node() {
         return this._node
       };
 
-      constructor() {
+      constructor() {};
 
-      };
+      onChange(e) {
+        this.inputValue.next(e);
+      }
 
       private nodeDependencies (){
-        // if (this.node.children) {
-        //   this.node.children.forEach((child) => {
-        //     this.templates.push({type: child.type, node: child});
-        //   });
-        // }
+        /* setup context */ 
+        console.log('-->', this.node._context);
+        let context = this.node._context;        
+        if (!this.node._context) {
+          this.node._top = true;
+          this.node._context = context = {
+            dictionary: {},
+            data: {},
+            id: this.node.id,
+            debugging: true
+          }
+        };
+
+        /* supplies context to children if exists */
+        if (this.node.children) {
+          this.node.children.forEach(c => c._context = context);
+        }
+
+        /* initialize value of component if necessary 
+          (checks root and options for backwards compatiility) */
+        if (!this.node.options) {
+          this.node.options = {};
+        }
+        if (this.node.options.value != null) {
+          this.initialValue = this.node.options.value;
+        }
+        if (this.node.value != null) {
+          this.initialValue = this.node.value;
+        }
+
+        /* adds itself to dictionary and data */
+        if (this.node.id && !this.node._top) {
+          console.log('--> Testing');
+          context.data[this.node.id] = this.initialValue;
+          context.dictionary[this.node.id] = this;
+        }
+
+        /* sets initial value and subscribes */        
+        this.inputValue.next(this.initialValue);
+        this.inputValue.subscribe(x => context.data[this.node.id] = x);
+
+        /* Extends itself with more JavaScript if applicable */
         if (!this.node._mapped) {
           const typeExtendFunc = viewModels[this.node.type];
           if (typeExtendFunc) {
@@ -176,8 +223,8 @@ function createComponentModule (componentType: any) {
       imports: [
         BrowserModule,
         FormsModule,
-        // DataTableModule,
-        MetadataModule
+        MetadataModule,        
+        DataTableModule
       ],
       declarations: [ componentType ]
     })
