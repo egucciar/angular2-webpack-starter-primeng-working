@@ -26,12 +26,24 @@
     },
     {
         "type": "grid",
-        "data": [
+        "columns": [
             {
-                "name": "Test Data Row 1"
+                "data": "name",
+                "title": "Name"
             },
             {
-                "name": "Test Data Row 2"
+                "data": "role",
+                "title": "Role"
+            }
+        ],
+        "data": [
+            {
+                "name": "Erica G",
+                "role": "Frenzied Fiancee"
+            },
+            {
+                "name": "Jim S",
+                "role": "Nasium Nexter"
             }
         ]
     }

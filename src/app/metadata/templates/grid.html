@@ -1,3 +1,24 @@
-<p-dataTable [value]="data" selectionMode="single" [responsive]="true">
-    <p-column field="name" header="name"></p-column>
+<p-dataTable [value]="data">
+    <p-column 
+        *ngFor="let col of columns" 
+            [field]="col.data" 
+            [header]="col.title">
+    </p-column>
 </p-dataTable>
+
+<!--<p-dataTable [value]="data" selectionMode="single" [responsive]="true">
+    <p-column *ngFor="let column of columns" [field]="column.field" [header]="column.header" [sortable]="column.isSortable">
+        <template  pTemplate type="header">
+            {{ column.title }}
+        </template>
+
+        <template let-data="rowData" let-i="rowIndex" pTemplate type="body">
+            <div *ngIf="column.type">
+                <metadata [node]="column"></metadata>
+            </div>
+            <div *ngIf="!column.type">
+                {{ rowData }}
+            </div>
+        </template>
+    </p-column>
+</p-dataTable>-->
