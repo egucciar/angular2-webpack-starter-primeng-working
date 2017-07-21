@@ -3,7 +3,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import {
   NgModule,
-  ApplicationRef
+  ApplicationRef,
+  forwardRef
 } from '@angular/core';
 import {
   removeNgStyles,
@@ -14,6 +15,8 @@ import {
   RouterModule,
   PreloadAllModules
 } from '@angular/router';
+
+import { COMPILER_PROVIDERS } from '@angular/compiler';
 
 /*
  * Platform and Environment providers/directives/pipes
@@ -28,6 +31,8 @@ import { HomeComponent } from './home';
 import { AboutComponent } from './about';
 import { NoContentComponent } from './no-content';
 import { XLargeDirective } from './home/x-large';
+// PJSON Metadata 
+import { MetadataComponent } from './metadata';
 
 import '../styles/styles.scss';
 import '../styles/headings.css';
@@ -37,6 +42,7 @@ const APP_PROVIDERS = [
   ...APP_RESOLVER_PROVIDERS,
   AppState
 ];
+
 
 type StoreType = {
   state: InternalStateType,
@@ -54,7 +60,8 @@ type StoreType = {
     AboutComponent,
     HomeComponent,
     NoContentComponent,
-    XLargeDirective
+    XLargeDirective,
+    forwardRef(() => MetadataComponent)
   ],
   /**
    * Import Angular's modules.
@@ -70,7 +77,8 @@ type StoreType = {
    */
   providers: [
     ENV_PROVIDERS,
-    APP_PROVIDERS
+    APP_PROVIDERS,
+    COMPILER_PROVIDERS
   ]
 })
 export class AppModule {

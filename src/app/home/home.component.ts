@@ -30,6 +30,7 @@ import { XLargeDirective } from './x-large';
   templateUrl: './home.component.html'
 })
 export class HomeComponent implements OnInit {
+  nodes : any;
   /**
    * Set our default values
    */
@@ -40,7 +41,14 @@ export class HomeComponent implements OnInit {
   constructor(
     public appState: AppState,
     public title: Title
-  ) {}
+  ) {
+    this.nodes = [{
+      type: 'input',
+      label: 'Hello World',
+      displayValue: true
+    }]
+  }
+
 
   public ngOnInit() {
     console.log('hello `Home` component');
