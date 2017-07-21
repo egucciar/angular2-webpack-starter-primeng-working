@@ -1,11 +1,13 @@
 [
     {
         "type": "responsive",
+        "_type": "ignore",
         "children": [
             {
                 "id": "TestA",
                 "type": "input",
-                "label": "Hello World"
+                "label": "Hello World",
+                "value": "Defaulted!"
             },
             {
                 "id": "TestB",
@@ -33,7 +35,8 @@
             },
             {
                 "data": "role",
-                "title": "Role"
+                "title": "Role",
+                "type": "input"
             }
         ],
         "data": [

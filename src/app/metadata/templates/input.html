@@ -1,6 +1,6 @@
 <div>
     <label>{{label}}</label>
-    <input (change)="onChange($event.target.value)">
+    <input [ngModel]="value" (change)="onChange($event.target.value)">
     <!-- 
         <input [(ngModel)]="inputValue" placeholder="{{placeholder}}"/>
     -->

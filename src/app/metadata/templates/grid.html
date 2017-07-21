@@ -1,8 +1,21 @@
 <p-dataTable [value]="data">
-    <p-column 
-        *ngFor="let col of columns" 
-            [field]="col.data" 
-            [header]="col.title">
+    <p-column *ngFor="let col of columns" [field]="col.data" [header]="col.title" [sortable]="col.isSortable">
+        <template pTemplate type="header">
+            {{ column.title }}
+        </template>
+
+        <template let-data="rowData" let-i="rowIndex" pTemplate type="body">
+            <div *ngIf="col.type">
+                <metadata 
+                    [data]="data"
+                    [value]="data[col.data]"
+                    [node]="col">
+                </metadata>
+            </div>
+            <div *ngIf="!col.type">
+                {{ data[col.data] }}
+            </div>
+        </template>
     </p-column>
 </p-dataTable>
 

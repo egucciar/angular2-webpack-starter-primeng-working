@@ -11,7 +11,8 @@ import { Component,
          SimpleChange,
          ComponentFactory,
          NgModule,
-         ChangeDetectorRef
+         ChangeDetectorRef,
+         OnInit
      } from '@angular/core';
 import * as _ from 'lodash';
 import { JitCompiler } from '@angular/compiler';
@@ -40,13 +41,28 @@ export class MetadataComponent implements AfterViewInit {
 
   private componentRef: ComponentRef<any>;
   _node : any;
-
+  _data: any;
+  _value: any;
   @Input()
   set node(node: any){
     this._node = node;
   }
   get node() {
     return this._node
+  };
+  @Input()
+    set data(data: any){
+      this._data = data;
+    }
+    get data() {
+      return this._data
+  };
+  @Input()
+    set value(value: any){
+      this._value = value;
+  }
+    get value() {
+      return this._value
   };
 
   constructor(private _rc: JitCompiler, private _cdRef : ChangeDetectorRef){}
@@ -64,6 +80,8 @@ export class MetadataComponent implements AfterViewInit {
       this.componentRef = this.dynamicComponentTarget.createComponent(factory);
       let component = this.componentRef.instance;
       component.node = this.node;
+      component.data = this.data;
+      component.value = this.value;
   }
 
   loadDynamicTags(){
@@ -96,7 +114,9 @@ function createComponent(tmpl:string, selector: string) {
         template: tmpl,
         entryComponents: [MetadataComponent]
     })
-    class PJSONComponent {
+    class PJSONComponent implements ngOnInit, ngAfterViewInit {      
+      _data : any;
+      _value: any;
       _node : any;
 
       inputValue = new Subject();
@@ -106,10 +126,23 @@ function createComponent(tmpl:string, selector: string) {
       @Input()
       set node(node: any){
         this._node = node;
-        this.nodeDependencies();
       }
       get node() {
         return this._node
+      };
+      @Input()
+      set data(data: any){
+        this._data = data;
+      }
+      get data() {
+        return this._data
+      };
+      @Input()
+        set value(value: any){
+          this._value = value;
+      }
+        get value() {
+          return this._value
       };
 
       constructor() {};
@@ -117,10 +150,16 @@ function createComponent(tmpl:string, selector: string) {
       onChange(e) {
         this.inputValue.next(e);
       }
+       public ngOnInit() {
+        this.nodeDependencies();
+      }
+      public ngAfterViewInit() {
+        this.inputValue.next(this.initialValue);
+      }
 
       private nodeDependencies (){
         /* setup context */ 
-        console.log('-->', this.node._context);
+        console.log('-->', this.node._context, this.data);
         let context = this.node._context;        
         if (!this.node._context) {
           this.node._top = true;
@@ -129,8 +168,16 @@ function createComponent(tmpl:string, selector: string) {
             data: {},
             id: this.node.id,
             debugging: true
-          }
-        };
+          };
+        }
+        if (this.node.data) {
+          this.node._context = {
+            data: this.data,
+            dictionary: {},
+            parentContext: context
+          };
+          context = this.node._context;
+        }
 
         /* supplies context to children if exists */
         if (this.node.children) {
@@ -147,6 +194,9 @@ function createComponent(tmpl:string, selector: string) {
         }
         if (this.node.value != null) {
           this.initialValue = this.node.value;
+        }
+        if (this.value != null) {
+          this.initialValue = this.value;
         }
 
         /* adds itself to dictionary and data */
@@ -210,6 +260,7 @@ const viewModels = {
 
 const templates = {
     'no-template': 'No Template exists (type={{type}}, template={{template}})',
+    'ignore-template': '',
     'test-type-template': 'Type test passed',
     'test-children-template':`
         <div *ngFor="let child of mappedChildNodes">
@@ -249,5 +300,6 @@ export function registerTemplate(template, id) {
 }
 
 export function getTemplate(selector) {
-    return templates[selector] || templates['no-template'];
+  const template = templates[selector];
+    return  template != null ? template : templates['no-template'];
 }
