@@ -1,37 +1,50 @@
-<p-dataTable [value]="data">
-    <p-column *ngFor="let col of columns" [field]="col.data" [header]="col.title" [sortable]="col.isSortable">
-        <template pTemplate type="header">
-            {{ column.title }}
-        </template>
+<div *ngIf="!pagination">
+    <p-dataTable [value]="data">
+        <p-column *ngFor="let col of columns" [field]="col.data" [header]="col.title" [sortable]="col.isSortable">
+            <template pTemplate type="header">
+                {{ col.title }}
+            </template>
 
-        <template let-data="rowData" let-i="rowIndex" pTemplate type="body">
-            <div *ngIf="col.type">
-                <metadata 
-                    [data]="data"
-                    [value]="data[col.data]"
-                    [node]="col">
-                </metadata>
-            </div>
-            <div *ngIf="!col.type">
-                {{ data[col.data] }}
-            </div>
-        </template>
-    </p-column>
-</p-dataTable>
+            <template let-data="rowData" let-i="rowIndex" pTemplate type="body">
+                <div *ngIf="col.type">
+                    <metadata 
+                        [data]="data"
+                        [value]="data[col.data]"
+                        [node]="col">
+                    </metadata>
+                </div>
+                <div *ngIf="!col.type">
+                    {{ data[col.data] }}
+                </div>
+            </template>
+        </p-column>
+    </p-dataTable>
+</div>
 
-<!--<p-dataTable [value]="data" selectionMode="single" [responsive]="true">
-    <p-column *ngFor="let column of columns" [field]="column.field" [header]="column.header" [sortable]="column.isSortable">
-        <template  pTemplate type="header">
-            {{ column.title }}
-        </template>
+<div *ngIf="pagination">
+    <p-dataTable    [value]="data"
+                    [rows]="pagination.limit"
+                    [paginator]="true"
+                    [lazy]="true"
+                    (onLazyLoad)="loadData($event)"
+                    [totalRecords]="totalRecords" >
+        <p-column *ngFor="let col of columns" [field]="col.data" [header]="col.title" [sortable]="col.isSortable">
+            <template pTemplate type="header">
+                {{ col.title }}
+            </template>
 
-        <template let-data="rowData" let-i="rowIndex" pTemplate type="body">
-            <div *ngIf="column.type">
-                <metadata [node]="column"></metadata>
-            </div>
-            <div *ngIf="!column.type">
-                {{ rowData }}
-            </div>
-        </template>
-    </p-column>
-</p-dataTable>-->
+            <template let-data="rowData" let-i="rowIndex" pTemplate type="body">
+                <div *ngIf="col.type">
+                    <metadata 
+                        [data]="data"
+                        [value]="data[col.data]"
+                        [node]="col">
+                    </metadata>
+                </div>
+                <div *ngIf="!col.type">
+                    {{ data[col.data] }}
+                </div>
+            </template>
+        </p-column>
+    </p-dataTable>
+</div>

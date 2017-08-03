@@ -1,0 +1,97 @@
+[
+    {
+        "type": "responsive",
+        "children": [
+            {
+                "type": "input",
+                "inputType": "text",
+                "label": "Rendered Test",
+                "rendered": "!_.isEmpty(text)",
+                "id": "test",
+                "value": "A"
+            },
+            {
+                "type": "input",
+                "inputType": "text",
+                "options": {
+                    "validations": {
+                        "__required": true,
+                        "required": {
+                            "params": true,
+                            "onlyIf": "select == 1"
+                        }
+                    }
+                }
+            },
+            {
+                "type": "input",
+                "inputType": "select",
+                "options": {
+                    "values": [
+                        {
+                            "text": "Text is required.",
+                            "value": 1
+                        },
+                        {
+                            "text": "Text is not required.",
+                            "value": 2
+                        }
+                    ],
+                    "_values": {
+                        "fromArray": "store.MandateRegionSource",
+                        "textKey": "name",
+                        "valueKey": "id"
+                    }
+                }
+            },
+            {
+                "type": "input",
+                "inputType": "multiselect"
+            },
+            {
+                "type": "input",
+                "inputType": "radio"
+            },
+            {
+                "type": "input",
+                "inputType": "checkbox"
+            },
+            {
+                "type": "input",
+                "inputType": "checkboxList"
+            },
+            {
+                "type": "input",
+                "inputType": "date"
+            },
+            {
+                "type": "input",
+                "inputType": "time"
+            },
+            {
+                "type": "input",
+                "inputType": "textarea"
+            },
+            {
+                "type": "input",
+                "inputType": "autosize"
+            },
+            {
+                "type": "input",
+                "inputType": "search"
+            }
+        ]
+    },
+    {
+        "type": "store",
+        "keyMap": {
+            "resultsKey": "data"
+        },
+        "_storeKey": "MandateRegionSource",
+        "dataSourceEndpoint": {
+            "target": {
+                "uri": "reference/endpoint"
+            }
+        }
+    }
+]

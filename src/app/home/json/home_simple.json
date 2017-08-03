@@ -7,7 +7,8 @@
                 "id": "TestA",
                 "type": "input",
                 "label": "Hello World",
-                "value": "Defaulted!"
+                "value": "Defaulted!",
+                "rendered": "TestB === 'A'"
             },
             {
                 "id": "TestB",

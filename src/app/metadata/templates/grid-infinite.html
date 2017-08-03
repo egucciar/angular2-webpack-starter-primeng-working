@@ -1,0 +1,22 @@
+<div class="ui-g">
+    <p-dataScroller 
+        [value]="data" 
+        [rows]="pagination.limit"
+        [lazy]="true"
+        (onLazyLoad)="loadData($event)">
+
+        <p-header>
+            <div class="ui-g-2" 
+                *ngFor="let col of columns">{{col.title}}
+            </div>
+        </p-header>
+        <p-footer>
+            Loaded {{offset}} out of {{totalRecords}} rows.
+        </p-footer>
+        <ng-template let-data pTemplate="item">
+            <div class="ui-g-2"
+                *ngFor="let col of columns">{{data[col.data]}}
+            </div>
+        </ng-template>
+    </p-dataScroller>
+</div>

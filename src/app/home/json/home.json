@@ -1,0 +1,59 @@
+[
+    {
+        "type": "responsive",
+        "_type": "ignore",
+        "children": [
+            {
+                "id": "TestA",
+                "type": "input",
+                "label": "Hello World",
+                "value": "Defaulted!"
+            },
+            {
+                "id": "TestB",
+                "type": "input",
+                "label": "Hello World"
+            },
+            {
+                "id": "TestC",
+                "type": "input",
+                "label": "Hello World"
+            },
+            {
+                "id": "TestD",
+                "type": "input",
+                "label": "Hello World"
+            }
+        ]
+    },
+    {
+        "type": "grid",
+        "template": "grid-infinite-template",
+        "infinite": true,
+        "columns": [
+            {
+                "data": "columnData",
+                "title": "Col Title"
+            }
+        ],
+        "pagination": {
+            "limit": 30
+        },
+        "dataSourceEndpoint": {
+            "target": {
+                "uri": "remote/endpoint",
+                "options": {
+                    "type": "POST"
+                },
+                "data": {
+                    "limit": 30,
+                    "offset": 0,
+                    "sortOrder": "DESC"
+                },
+                "keyMap": {
+                    "resultsKey": "data"
+                }
+            }
+        }
+    }
+]

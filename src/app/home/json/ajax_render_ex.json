@@ -1,0 +1,32 @@
+[
+    {
+        "type": "ajaxRender",
+        "id": "form-container",
+        "template": "metadata-template"
+    },
+    {
+        "type": "action",
+        "template": "ignore-template",
+        "actionType": "event",
+        "immediate": true,
+        "delay": 0,
+        "options": {
+            "target": "form-container.render",
+            "params": {
+                "target": {
+                    "url": "http://localhost:9090/",
+                    "uri": "uri/here",
+                    "options": {
+                        "type": "POST"
+                    },
+                    "dataMapFunctions": {
+                        "after": "transform-form"
+                    }
+                },
+                "keyMap": {
+                    "resultsKey": "data"
+                }
+            }
+        }
+    }
+]

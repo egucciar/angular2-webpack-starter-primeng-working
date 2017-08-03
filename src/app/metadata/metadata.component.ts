@@ -1,244 +1,271 @@
-
-import { Component,
-         Inject,
-         Input,
-         ComponentRef,
-         ViewChild,
-         ViewContainerRef,
-         AfterViewInit,
-         OnDestroy,
-         OnChanges,
-         SimpleChange,
-         ComponentFactory,
-         NgModule,
-         ChangeDetectorRef,
-         OnInit
-     } from '@angular/core';
+import {
+  Component,
+  Inject,
+  Input,
+  ComponentRef,
+  ViewChild,
+  ViewContainerRef,
+  AfterViewInit,
+  AfterContentInit,
+  OnDestroy,
+  OnChanges,
+  SimpleChange,
+  ComponentFactory,
+  NgModule,
+  ChangeDetectorRef,
+  OnInit
+} from '@angular/core';
 import * as _ from 'lodash';
 import { JitCompiler } from '@angular/compiler';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 // primeng components
 import 'font-awesome/css/font-awesome.min.css';
 import 'primeng/resources/themes/omega/theme.css';
 import 'primeng/resources/primeng.min.css';
 import { DataTableModule } from 'primeng/components/datatable/datatable';
+import { DataScrollerModule } from 'primeng/components/datascroller/datascroller';
+// dataservice
+import { DataService } from './data.service';
+
+// scalejs helpers
+import { get } from './helpers';
 
 // RX
 import { Subject } from 'rxjs/Subject';
 import { Observable } from 'rxjs/Observable';
 
+// Expression Parser
+import { computed, observable, extendObservable } from 'mobx';
+import { evaluate } from './expressions';
+// import { MobxAngularModule } from 'mobx-angular';
+
+// custom validators
+import { EmailValidator } from './validators/email';
+
+/* Metadata Component */
+// components created dynamically
 const componentCache = {};
 
 @Component({
   selector: 'metadata',
   template: `<template #dynamicContentPlaceHolder></template>`,
+  providers: [DataService]
 })
 export class MetadataComponent implements AfterViewInit {
-  @ViewChild('dynamicContentPlaceHolder', {read: ViewContainerRef})
-    dynamicComponentTarget: ViewContainerRef;
+  @ViewChild('dynamicContentPlaceHolder', { read: ViewContainerRef })
+  dynamicComponentTarget: ViewContainerRef;
 
   private componentRef: ComponentRef<any>;
-  _node : any;
-  _data: any;
-  _value: any;
-  @Input()
-  set node(node: any){
-    this._node = node;
+  _node: any; _data: any; _value: any;
+  @Input() set node(node: any) { this._node = node; } get node() { return this._node };
+  @Input() set data(data: any) { this._data = data; } get data() { return this._data };
+  @Input() set value(value: any) { this._value = value; } get value() { return this._value };
+
+  constructor(private _rc: JitCompiler, private _cdRef: ChangeDetectorRef) { }
+
+  ngAfterViewInit() {
+    this.loadDynamicTags();
+    this._cdRef.detectChanges();
   }
-  get node() {
-    return this._node
-  };
-  @Input()
-    set data(data: any){
-      this._data = data;
+
+  loadDynamicTags() {
+    const templateSelector = this._node.template || `${this._node.type}-template`;
+
+    if (this._node.type === 'ignore') {
+      return;
     }
-    get data() {
-      return this._data
-  };
-  @Input()
-    set value(value: any){
-      this._value = value;
-  }
-    get value() {
-      return this._value
-  };
 
-  constructor(private _rc: JitCompiler, private _cdRef : ChangeDetectorRef){}
+    if (componentCache[templateSelector]) {
+      let factory = componentCache[templateSelector];
+      this.renderDynamicComponent(factory);
+    } else {
+      const template = getTemplate(templateSelector),
+        newComponent = createComponent(template, templateSelector),
+        newModule = createComponentModule(newComponent);
 
-  ngAfterViewInit(){
-      this.loadDynamicTags();
-      this._cdRef.detectChanges();
+      this._rc
+        .compileModuleAndAllComponentsAsync(newModule)
+        .then((moduleWithFactories) => {
+          let factory = _.find(moduleWithFactories.componentFactories, { componentType: newComponent });
+          componentCache[templateSelector] = factory;
+
+          this.renderDynamicComponent(factory);
+        });
+    }
   }
 
   renderDynamicComponent(factory) {
-      if (this.componentRef) {
-        this.componentRef.destroy();
-      }
+    if (this.componentRef) {
+      this.componentRef.destroy();
+    }
 
-      this.componentRef = this.dynamicComponentTarget.createComponent(factory);
-      let component = this.componentRef.instance;
-      component.node = this.node;
-      component.data = this.data;
-      component.value = this.value;
-  }
-
-  loadDynamicTags(){
-      const templateSelector = this._node.template || `${this._node.type}-template`;
-
-      if (componentCache[templateSelector]) {
-          let factory = componentCache[templateSelector];
-          this.renderDynamicComponent(factory);
-      } else {
-          const template = getTemplate(templateSelector),
-                newComponent = createComponent(template, templateSelector),
-                newModule = createComponentModule(newComponent);
-
-        this._rc
-             .compileModuleAndAllComponentsAsync(newModule)
-                .then((moduleWithFactories) => {
-                  console.log(moduleWithFactories);
-                  let factory = _.find(moduleWithFactories.componentFactories, { componentType: newComponent });
-                  componentCache[templateSelector] = factory;
-
-                  this.renderDynamicComponent(factory);
-              });
-      }
+    this.componentRef = this.dynamicComponentTarget.createComponent(factory);
+    let component = this.componentRef.instance;
+    component.node = this.node;
+    component.data = this.data;
+    component.value = this.value;
   }
 }
 
-function createComponent(tmpl:string, selector: string) {
-    @Component({
-        selector: selector,
-        template: tmpl,
-        entryComponents: [MetadataComponent]
-    })
-    class PJSONComponent implements ngOnInit, ngAfterViewInit {      
-      _data : any;
-      _value: any;
-      _node : any;
+function createComponentModule(componentType: any) {
+  @NgModule({
+    imports: [
+      BrowserModule,
+      CommonModule,
+      FormsModule,
+      MetadataModule,
+      DataTableModule,
+      DataScrollerModule /*,
+      MobxAngularModule */
+    ],
+    declarations: [componentType]
+  })
+  class RuntimeComponentModule { }
 
-      inputValue = new Subject();
-      initialValue = null;
-      JSON = JSON;
+  return RuntimeComponentModule;
+}
 
-      @Input()
-      set node(node: any){
-        this._node = node;
-      }
-      get node() {
-        return this._node
-      };
-      @Input()
-      set data(data: any){
-        this._data = data;
-      }
-      get data() {
-        return this._data
-      };
-      @Input()
-        set value(value: any){
-          this._value = value;
-      }
-        get value() {
-          return this._value
-      };
+@NgModule({
+  imports: [FormsModule],
+  declarations: [MetadataComponent, EmailValidator],
+  exports: [MetadataComponent, EmailValidator]
+})
+class MetadataModule { }
 
-      constructor() {};
+/* PJSON Component */
+function createComponent(tmpl: string, selector: string) {
+  @Component({
+    selector: selector,
+    template: tmpl,
+    entryComponents: [MetadataComponent]
+  })
+  class PJSONComponent implements OnInit, AfterViewInit, OnDestroy, AfterContentInit {
+    _node: any; _data: any; _value: any; rendered: any;
+    @Input() set node(node: any) { this._node = node; } get node() { return this._node };
+    @Input() set data(data: any) { this._data = data; } get data() { return this._data };
+    @Input() set value(value: any) { this._value = value; } get value() { return this._value };
 
-      onChange(e) {
-        this.inputValue.next(e);
-      }
-       public ngOnInit() {
-        this.nodeDependencies();
-      }
-      public ngAfterViewInit() {
-        this.inputValue.next(this.initialValue);
-      }
+    inputValueObs = observable();
+    inputValue = new Subject();
+    initialValue = null;
+    JSON = JSON;
+    onChange(e) {
+      this.value = e;
+      this.inputValue.next(e);
+    }
+    createExpression(prop, term, getValue?, mapper?) {
+      mapper = mapper || function (x) { return x; }
+      getValue = getValue || this.node._context.getValue;
+      const expression = computed(() => {
+        console.log('Evaluating', term);
+        return evaluate(term, getValue);
+      }, { context: this });
+      this[prop] = mapper(expression.get());
+      expression.observe((v) => {
+        this[prop] = mapper(v.newValue);
+      });
+    }
+    constructor(private _dataService: DataService) { };
 
-      private nodeDependencies (){
-        /* setup context */ 
-        console.log('-->', this.node._context, this.data);
-        let context = this.node._context;        
-        if (!this.node._context) {
-          this.node._top = true;
-          this.node._context = context = {
-            dictionary: {},
-            data: {},
-            id: this.node.id,
-            debugging: true
-          };
-        }
-        if (this.node.data) {
-          this.node._context = {
-            data: this.data,
-            dictionary: {},
-            parentContext: context
-          };
-          context = this.node._context;
-        }
+    public ngOnInit() {
+      this.nodeDependencies();
+    }
+    public ngAfterViewInit() {
+      this.inputValue.next(this.initialValue);
+    }
+    public ngAfterContentInit() {
+    }
+    public ngOnDestroy() {
+      this.inputValue.unsubscribe();
+    }
 
-        /* supplies context to children if exists */
-        if (this.node.children) {
-          this.node.children.forEach(c => c._context = context);
-        }
+    private nodeDependencies() {
+      const typeSettings = viewModels[this.node.type] || {};
 
-        /* initialize value of component if necessary 
-          (checks root and options for backwards compatiility) */
-        if (!this.node.options) {
-          this.node.options = {};
-        }
-        if (this.node.options.value != null) {
-          this.initialValue = this.node.options.value;
-        }
-        if (this.node.value != null) {
-          this.initialValue = this.node.value;
-        }
-        if (this.value != null) {
-          this.initialValue = this.value;
-        }
+      /* setup context */
+      let context = this.node._context;
+      if (!this.node._context) {
+        const internalDict = {};
 
-        /* adds itself to dictionary and data */
-        if (this.node.id && !this.node._top) {
-          console.log('--> Testing');
-          context.data[this.node.id] = this.initialValue;
-          context.dictionary[this.node.id] = this;
-        }
-
-        /* sets initial value and subscribes */        
-        this.inputValue.next(this.initialValue);
-        this.inputValue.subscribe(x => context.data[this.node.id] = x);
-
-        /* Extends itself with more JavaScript if applicable */
-        if (!this.node._mapped) {
-          const typeExtendFunc = viewModels[this.node.type];
-          if (typeExtendFunc) {
-            _.extend(this, typeExtendFunc(this.node));
-          } else {
-            _.extend(this, this.node);
+        this.node._top = true;
+        this.node._context = context = {
+          dictionary: observable.map(new Map()),
+          data: {},
+          id: this.node.id,
+          debugging: true,
+          getValue(id) {
+            if (id === '_') { return _; }
+            let item = context.dictionary.get(id);
+            if (!item) return null;
+            if (item.hasOwnProperty('inputValueObs')) {
+              return item.inputValueObs.get();
+            }
           }
+        };
+      }
+
+      /* supplies context to children if exists */
+      if (this.node.children) {
+        this.node.children.forEach(c => c._context = context);
+      }
+
+      /* initialize value of component if necessary 
+        (checks root and options for backwards compatiility) */
+      if (this.node.value != null) {
+        this.initialValue = this.node.value;
+      }
+      if (this.value != null) {
+        this.initialValue = this.value;
+      }
+
+      /* adds itself to dictionary and data */
+      if (this.node.id && !this.node._top) {
+        context.data[this.node.id] = this.initialValue;
+        context.dictionary.merge({
+          [this.node.id]: this
+        });
+        this.inputValue.subscribe((x) => {
+          context.data[this.node.id] = x;
+          this.inputValueObs.set(x);
+        });
+      }
+
+      /* gets the data for itself */
+      if (this.node.dataSourceEndpoint && !typeSettings.controlsData) {
+        const keyMap = this.node.dataSourceEndpoint.target.keyMap || {},
+          resultsKey = keyMap.resultsKey || '';
+        this._dataService.ajax(this.node.dataSourceEndpoint.target)
+          .subscribe(data => this.data = resultsKey ? get(data, resultsKey) : data);
+      }
+
+      this.rendered = this.node.rendered === false ? false : true;
+      if (typeof this.node.rendered === 'string') {
+        const renderedString = this.node.rendered;
+        delete this.node.rendered;
+        this.createExpression('rendered', renderedString);
+      }
+
+      /* Extends itself with more JavaScript if applicable */
+      if (!this.node._mapped) {
+        const typeExtendFunc = viewModels[this.node.type];
+        if (typeExtendFunc) {
+          _.extend(this, typeExtendFunc.call(this, this.node));
         } else {
           _.extend(this, this.node);
         }
+      } else {
+        _.extend(this, this.node);
       }
     }
+  }
 
-    return PJSONComponent;
+  return PJSONComponent;
 }
 
-
- function createViewModels(nodes) {
-   const context = this;
-   return nodes.map(createViewModel.bind(this)).filter(n => n != null);
- }
-
- function createViewModel(node) {
-    const vm = viewModels[node.type] || function () {};
-    node._mapped = true;
-    return vm.call(this, node);
-
- }
+/* Viewmodel and Template registry and retrival */
 const viewModels = {
   'test-children': function (node) {
     const mappedChildNodes = createViewModels.call(this, node.children || []),
@@ -259,47 +286,45 @@ const viewModels = {
 };
 
 const templates = {
-    'no-template': 'No Template exists (type={{type}}, template={{template}})',
-    'ignore-template': '',
-    'test-type-template': 'Type test passed',
-    'test-children-template':`
+  'no-template': 'No Template exists (type={{type}}, template={{template}})',
+  'ignore-template': '',
+  'test-type-template': 'Type test passed',
+  'test-children-template': `
         <div *ngFor="let child of mappedChildNodes">
           <metadata [node]="child"></metadata>
         </div>
       </div>`,
 };
 
-function createComponentModule (componentType: any) {
-    @NgModule({
-      imports: [
-        BrowserModule,
-        FormsModule,
-        MetadataModule,        
-        DataTableModule
-      ],
-      declarations: [ componentType ]
-    })
-    class RuntimeComponentModule {}
-
-    return RuntimeComponentModule;
+function createViewModels(nodes) {
+  const context = this;
+  return nodes.map(createViewModel.bind(this)).filter(n => n != null);
 }
 
-@NgModule({
-    imports: [FormsModule],
-    declarations: [MetadataComponent/*, AngularComponent*/],
-    exports: [MetadataComponent/*, AngularComponent*/]
-})
-class MetadataModule {}
+function createViewModel(node) {
+  const vm = viewModels[node.type] || function () { };
+  node._mapped = true;
+  return vm.call(this, node);
 
-export function registerViewModel(vm) {
-    _.extend(viewModels, vm);
 }
 
-export function registerTemplate(template, id) {
-    templates[id] = template;
+function registerViewModel(vm) {
+  _.extend(viewModels, vm);
 }
 
-export function getTemplate(selector) {
-  const template = templates[selector];
-    return  template != null ? template : templates['no-template'];
+function registerTemplate(template, id) {
+  templates[id] = template;
+}
+
+function getTemplate(selector) {
+  const template = `<template [ngIf]="rendered"> ${templates[selector]} </template>`;
+  return template != null ? template : templates['no-template'];
+}
+
+export {
+  createViewModel,
+  createViewModels,
+  registerTemplate,
+  registerViewModel,
+  getTemplate
 }

@@ -1,14 +1,25 @@
-<div>
+<div class="form-group">
     <label>{{label}}</label>
-    <input [ngModel]="value" (change)="onChange($event.target.value)">
-    <!-- 
-        <input [(ngModel)]="inputValue" placeholder="{{placeholder}}"/>
-    -->
-
-<!--
-    <div >*ngIf="_context.debugging">
-        InputValue: {{inputValue}}
+    <template [ngIf]="!inputType || inputType === 'text'">
+        <input  type="text"
+                class="form-control"
+                [ngModel]="value"
+                (change)="onChange($event.target.value)"
+                [required]="!val.pristine && required"
+                #val="ngModel">
+        <div class="error-msg" *ngIf="!val.pristine && !val.valid">
+            <span class="fa fa-info-circle fa-fw"></span><span>Enter a value</span>
+        </div>
+    </template>
+    
+    <div [ngSwitch]="inputType">
+        <select *ngSwitchCase="'select'"
+            class="form-control"
+            [ngModel]="value"
+            (change)="onChange($event.target.value)">
+            <option *ngFor="let value of values" value="{{value.value}}">
+                {{value.text}}
+            </option>
+        </select>
     </div>
--->
-
 </div>

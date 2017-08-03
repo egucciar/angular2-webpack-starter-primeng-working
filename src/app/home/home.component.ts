@@ -7,7 +7,14 @@ import { AppState } from '../app.service';
 import { Title } from './title';
 import { XLargeDirective } from './x-large';
 
-import json from './home.json';
+//import json from './json/home_simple.json';
+//import json from './json/home.json';
+import json from './json/inputs.json';
+
+json[0].children.slice(1).forEach(input => {
+  input.label = input.inputType;
+  input.id = input.inputType
+});
 
 @Component({
   selector: 'home',  // <home></home>

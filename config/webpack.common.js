@@ -85,7 +85,7 @@ module.exports = function (options) {
       /**
        * An array of directory names to be resolved to the current directory
        */
-      modules: [helpers.root('src'), helpers.root('node_modules')],
+      modules: [helpers.root('src'), helpers.root('node_modules'), helpers.root('bower_components')],
 
     },
 
@@ -164,7 +164,11 @@ module.exports = function (options) {
         {
           test: /\.css$/,
           use: ['to-string-loader', 'css-loader'],
-          exclude: [helpers.root('src', 'styles')]
+          exclude: [
+            helpers.root('src', 'styles'),
+            helpers.root('node_modules', 'font-awesome'),
+            helpers.root('node_modules', 'primeng')
+          ]
         },
 
         /**
