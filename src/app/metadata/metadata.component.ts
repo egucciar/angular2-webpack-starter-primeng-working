@@ -80,20 +80,18 @@ export class MetadataComponent implements AfterViewInit {
 
     if (componentCache[templateSelector]) {
       let factory = componentCache[templateSelector];
+      // console.log('Picking up component from cache');
       this.renderDynamicComponent(factory);
     } else {
       const template = getTemplate(templateSelector),
         newComponent = createComponent(template, templateSelector),
         newModule = createComponentModule(newComponent);
+        // console.log('Making new Component');
 
-      this._rc
-        .compileModuleAndAllComponentsAsync(newModule)
-        .then((moduleWithFactories) => {
-          let factory = _.find(moduleWithFactories.componentFactories, { componentType: newComponent });
-          componentCache[templateSelector] = factory;
-
-          this.renderDynamicComponent(factory);
-        });
+      const moduleWithFactories = this._rc.compileModuleAndAllComponentsSync(newModule);
+      let factory = _.find(moduleWithFactories.componentFactories, { componentType: newComponent });
+      componentCache[templateSelector] = factory;
+      this.renderDynamicComponent(factory);
     }
   }
 
@@ -160,7 +158,7 @@ function createComponent(tmpl: string, selector: string) {
       mapper = mapper || function (x) { return x; }
       getValue = getValue || this.node._context.getValue;
       const expression = computed(() => {
-        console.log('Evaluating', term);
+        // console.log('Evaluating', term);
         return evaluate(term, getValue);
       }, { context: this });
       this[prop] = mapper(expression.get());
